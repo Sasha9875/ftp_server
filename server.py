@@ -6,6 +6,12 @@ WORKING_DIR = r'.\user'
 
 current_dir = WORKING_DIR  # Переменная для отслеживания текущей директории
 
+def is_within_working_dir(path):
+    # Проверка, что путь находится в пределах рабочей директории
+    abs_working_dir = os.path.abspath(WORKING_DIR)
+    abs_path = os.path.abspath(path)
+    return os.path.commonpath([abs_working_dir]) == os.path.commonpath([abs_working_dir, abs_path])
+
 def process(req):
     global current_dir
     command = req.split()
@@ -23,73 +29,91 @@ def process(req):
         if len(command) < 2:
             return 'bad request: missing folder name'
         new_dir = os.path.join(current_dir, command[1])
-        if os.path.isdir(new_dir):
+        if os.path.isdir(new_dir) and is_within_working_dir(new_dir):
             current_dir = new_dir
             return f"Changed directory to {new_dir}"
         else:
-            return f"Directory {command[1]} does not exist"
+            return f"Directory {command[1]} does not exist or is out of bounds"
     
     elif command[0] == 'mkdir':
         if len(command) < 2:
             return 'bad request: missing folder name'
         folder_path = os.path.join(current_dir, command[1])
-        try:
-            os.makedirs(folder_path, exist_ok=True)
-            return f"Directory {command[1]} created"
-        except Exception as e:
-            return f"Error creating directory {command[1]}: {e}"
+        if is_within_working_dir(folder_path):
+            try:
+                os.makedirs(folder_path, exist_ok=True)
+                return f"Directory {command[1]} created"
+            except Exception as e:
+                return f"Error creating directory {command[1]}: {e}"
+        else:
+            return 'bad request: out of bounds'
     
     elif command[0] == 'rmdir':
         if len(command) < 2:
             return 'bad request: missing folder name'
         folder_path = os.path.join(current_dir, command[1])
-        try:
-            shutil.rmtree(folder_path)
-            return f"Directory {command[1]} removed"
-        except Exception as e:
-            return f"Error removing directory {command[1]}: {e}"
+        if is_within_working_dir(folder_path):
+            try:
+                shutil.rmtree(folder_path)
+                return f"Directory {command[1]} removed"
+            except Exception as e:
+                return f"Error removing directory {command[1]}: {e}"
+        else:
+            return 'bad request: out of bounds'
     
     elif command[0] == 'rm':
         if len(command) < 2:
             return 'bad request: missing file name'
         file_path = os.path.join(current_dir, command[1])
-        try:
-            os.remove(file_path)
-            return f"File {command[1]} removed"
-        except Exception as e:
-            return f"Error removing file {command[1]}: {e}"
+        if is_within_working_dir(file_path):
+            try:
+                os.remove(file_path)
+                return f"File {command[1]} removed"
+            except Exception as e:
+                return f"Error removing file {command[1]}: {e}"
+        else:
+            return 'bad request: out of bounds'
     
     elif command[0] == 'mv':
         if len(command) < 3:
             return 'bad request: missing source or destination'
         src_path = os.path.join(current_dir, command[1])
         dst_path = os.path.join(current_dir, command[2])
-        try:
-            shutil.move(src_path, dst_path)
-            return f"Moved {command[1]} to {command[2]}"
-        except Exception as e:
-            return f"Error moving {command[1]} to {command[2]}: {e}"
+        if is_within_working_dir(src_path) and is_within_working_dir(dst_path):
+            try:
+                shutil.move(src_path, dst_path)
+                return f"Moved {command[1]} to {command[2]}"
+            except Exception as e:
+                return f"Error moving {command[1]} to {command[2]}: {e}"
+        else:
+            return 'bad request: out of bounds'
     
     elif command[0] == 'upload':
         if len(command) < 3:
             return 'bad request: missing file name or content'
         file_path = os.path.join(current_dir, command[1])
-        try:
-            with open(file_path, 'w') as f:
-                f.write(' '.join(command[2:]))
-            return f"File {command[1]} uploaded"
-        except Exception as e:
-            return f"Error uploading file {command[1]}: {e}"
+        if is_within_working_dir(file_path):
+            try:
+                with open(file_path, 'w') as f:
+                    f.write(' '.join(command[2:]))
+                return f"File {command[1]} uploaded"
+            except Exception as e:
+                return f"Error uploading file {command[1]}: {e}"
+        else:
+            return 'bad request: out of bounds'
     
     elif command[0] == 'download':
         if len(command) < 2:
             return 'bad request: missing file name'
         file_path = os.path.join(current_dir, command[1])
-        try:
-            with open(file_path, 'r') as f:
-                return f.read()
-        except Exception as e:
-            return f"Error downloading file {command[1]}: {e}"
+        if is_within_working_dir(file_path):
+            try:
+                with open(file_path, 'r') as f:
+                    return f.read()
+            except Exception as e:
+                return f"Error downloading file {command[1]}: {e}"
+        else:
+            return 'bad request: out of bounds'
     
     elif command[0] == 'exit':
         return 'exit'
