@@ -1,0 +1,17 @@
+Connection from ('127.0.0.1', 57111)
+Request: ls
+Connection from ('127.0.0.1', 57140)
+Request: mkdir 1
+Connection from ('127.0.0.1', 57143)
+Request: cd 1
+Connection from ('127.0.0.1', 57144)
+Request: pwd user
+Connection from ('127.0.0.1', 57145)
+Request: cd
+Connection from ('127.0.0.1', 57147)
+Request: cd user
+Connection from ('127.0.0.1', 57148)
+Request: ls
+Connection from ('127.0.0.1', 57149)
+Request: pwd
+Connection from ('127.0.0.1', 57150)
